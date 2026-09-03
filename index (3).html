@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Workspace Pelatih KIR Terpadu - SMAN 60 • SMAN 46 • SMA Dewi Sartika</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue.js 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        [v-cloak] { display: none; }
+        
+        @keyframes scaleIn {
+            0% { transform: scale(0.92); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-scale-in { animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white antialiased">
+
+    <!-- MAIN VUE APP CONTAINER -->
+    <div id="app" class="w-full max-w-7xl mx-auto px-4 py-6 md:py-8 flex-1 flex flex-col" v-cloak>
+        
+        <!-- HEADER UTAMA WORKSPACE PELATIH -->
+        <header class="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-slate-200 pb-6 mb-6 gap-4 flex-none">
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-white text-2xl">
+                    <i class="fa-solid fa-user-tie"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xs font-bold tracking-widest text-emerald-700 uppercase">PORTAL PELATIH KIR TERPADU</h1>
+                        <span class="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-2 py-0.5 rounded border border-emerald-200 uppercase">3 Sekolah Binaan</span>
+                    </div>
+                    <p class="text-lg font-extrabold text-slate-900 tracking-tight">Pusat Kendali Jurnal KBM, Honorarium & DSS Kurikulum</p>
+                </div>
+            </div>
+            
+            <!-- 3-SCHOOL SWITCHER DROPDOWN & SIMULATION TOGGLE -->
+            <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                
+                <!-- SAKELAR MODE SIMULASI VS LIVE GOOGLE SHEETS -->
+                <button @click="toggleDataMode" :class="['px-3.5 py-2 rounded-2xl border text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-sm', isSimulationMode ? 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100' : 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100']">
+                    <i :class="['fa-solid text-xs', isSimulationMode ? 'fa-flask text-amber-600' : 'fa-database text-emerald-600']"></i>
+                    <span>{{ isSimulationMode ? 'Mode Simulasi (Data Demo)' : 'Mode Live (GSheets / GAS)' }}</span>
+                </button>
+
+                <!-- SWITCHER SEKOLAH -->
+                <div class="bg-white border border-slate-200 p-1 rounded-2xl flex items-center w-full md:w-auto shadow-sm">
+                    <i class="fa-solid fa-school text-indigo-600 pl-3 text-xs"></i>
+                    <select v-model="selectedSekolah" @change="onSchoolChange" class="bg-transparent text-xs font-extrabold text-slate-800 px-3 py-2 outline-none cursor-pointer w-full md:w-auto">
+                        <option value="SMAN 60 JAKARTA" class="bg-white text-slate-800">SMAN 60 JAKARTA</option>
+                        <option value="SMAN 46 JAKARTA" class="bg-white text-slate-800">SMAN 46 JAKARTA</option>
+                        <option value="SMA DEWI SARTIKA" class="bg-white text-slate-800">SMA DEWI SARTIKA</option>
+                    </select>
+                </div>
+
+                <span class="bg-white border border-slate-200 text-slate-600 px-3.5 py-2 rounded-xl text-xs font-mono font-bold hidden sm:inline-block shadow-sm">
+                    ⏰ {{ clockTime }} WIB
+                </span>
+            </div>
+        </header>
+
+        <!-- MAIN NAVIGATION TABS -->
+        <nav class="flex bg-slate-200/80 p-1.5 rounded-2xl border border-slate-200 mb-6 gap-1 flex-none overflow-x-auto no-scrollbar">
+            <button @click="activeTab = 'presensi'" :class="['flex-1 min-w-[140px] py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer', activeTab === 'presensi' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100']">
+                <i class="fa-solid fa-clipboard-user"></i><span>Presensi & Jurnal</span>
+            </button>
+            <button @click="activeTab = 'matriks_absen'" :class="['flex-1 min-w-[160px] py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer', activeTab === 'matriks_absen' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100']">
+                <i class="fa-solid fa-table-list"></i><span>Rekap Absen, Tugas & Prestasi</span>
+            </button>
+            <button @click="activeTab = 'honor'" :class="['flex-1 min-w-[140px] py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer', activeTab === 'honor' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100']">
+                <i class="fa-solid fa-hand-holding-dollar"></i><span>Rekap Honorarium (GAS)</span>
+            </button>
+            <button @click="activeTab = 'leaderboard'" :class="['flex-1 min-w-[140px] py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer', activeTab === 'leaderboard' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100']">
+                <i class="fa-solid fa-award"></i><span>Top 15 "Si Paling"</span>
+            </button>
+            <button @click="activeTab = 'dss'" :class="['flex-1 min-w-[140px] py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer', activeTab === 'dss' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100']">
+                <i class="fa-solid fa-compass-drafting"></i><span>Rekomendasi DSS</span>
+            </button>
+        </nav>
+
+        <!-- SECTION 1: PRESENSI & JURNAL KBM PELATIH -->
+        <div v-if="activeTab === 'presensi'" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex-1">
+            
+            <!-- Left Panel: Form Input Presensi Multi-Pelatih -->
+            <div class="lg:col-span-7 bg-white border border-slate-200 p-6 md:p-8 rounded-3xl space-y-6 shadow-sm">
+                <div class="border-b border-slate-200 pb-4 flex justify-between items-start">
+                    <div>
+                        <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-widest bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg">
+                            {{ selectedSekolah }}
+                        </span>
+                        <h3 class="text-lg font-extrabold text-slate-900 tracking-tight mt-2">Formulir Presensi & Jurnal KBM Pelatih</h3>
+                        <p class="text-xs text-slate-500">Pilih tanggal KBM, pelatih hadir, evaluasi RPP, dan kondisi lapangan.</p>
+                    </div>
+                </div>
+
+                <!-- TANGGAL SELECTION FIELD -->
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                        Tanggal Kegiatan KBM (Bisa Pilih Tanggal Lampau)
+                    </label>
+                    <div class="flex gap-2">
+                        <input v-model="formPresensi.tanggalKegiatan" type="date" class="flex-1 bg-slate-100/80 px-4 py-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-indigo-600 transition-all" required>
+                        <button type="button" @click="setTanggalToday" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold px-4 rounded-xl border border-indigo-200 transition-all cursor-pointer">
+                            Hari Ini
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STATE A: LOCKED BANNER -->
+                <div v-if="isCurrentDateAndSchoolLocked && !isEditMode" class="bg-amber-50/90 border border-amber-300 p-6 md:p-8 rounded-2xl text-center space-y-4 animate-scale-in">
+                    <div class="w-16 h-16 rounded-2xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700 mx-auto text-2xl shadow-sm">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <h4 class="text-sm font-extrabold text-slate-900 uppercase tracking-wider">Jurnal KBM Tanggal Ini Sudah Tersimpan!</h4>
+                        <p class="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
+                            Presensi & Jurnal KBM untuk <strong class="text-emerald-700">{{ selectedSekolah }}</strong> pada tanggal <strong class="text-emerald-700">{{ formPresensi.tanggalKegiatan }}</strong> telah resmi dicatat sebelumnya.
+                        </p>
+                    </div>
+                    <div class="pt-2 flex flex-wrap justify-center gap-3">
+                        <button @click="enableEditMode" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-5 py-3 rounded-xl text-xs transition-all flex items-center gap-2 cursor-pointer shadow-md shadow-amber-500/20">
+                            <i class="fa-solid fa-pen-to-square"></i> Edit / Input Ulang Jurnal Tanggal Ini
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STATE B: ACTIVE FORM -->
+                <form v-else @submit.prevent="submitPresensiPelatih" class="space-y-5 animate-scale-in">
+                    
+                    <div v-if="isEditMode" class="bg-amber-50 border border-amber-300 p-3.5 rounded-xl flex items-center justify-between text-xs text-amber-900">
+                        <span class="flex items-center gap-2 font-medium">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Mode Edit: Memperbarui jurnal {{ selectedSekolah }} tanggal {{ formPresensi.tanggalKegiatan }}
+                        </span>
+                        <button type="button" @click="cancelEditMode" class="text-slate-500 hover:text-slate-800 font-bold underline cursor-pointer">Batal</button>
+                    </div>
+
+                    <!-- Multi-Check Pelatih -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-2">
+                            Pelatih Yang Mengajar (Bisa Pilih Lebih Dari Satu)
+                        </label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <label v-for="coach in coachList" :key="coach" :class="['border p-3 rounded-2xl flex items-center justify-between cursor-pointer transition-all', formPresensi.pelatih.includes(coach) ? 'bg-emerald-50 border-emerald-500 text-emerald-900 font-bold' : 'bg-slate-100/80 border-slate-200 text-slate-600 hover:border-slate-300']">
+                                <span class="text-xs">{{ coach }}</span>
+                                <input type="checkbox" :value="coach" v-model="formPresensi.pelatih" class="hidden">
+                                <i :class="['fa-solid text-xs', formPresensi.pelatih.includes(coach) ? 'fa-circle-check text-emerald-600' : 'fa-circle text-slate-300']"></i>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- RPP Selection with Anti-Duplication Lock -->
+                    <div class="space-y-3">
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-0.5">Materi Pertemuan / RPP</label>
+                        <select v-model="formPresensi.rpp" class="w-full bg-slate-100/80 px-4 py-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-600 transition-all cursor-pointer">
+                            <option v-for="n in 6" :key="n" :value="'Pertemuan ' + n" :disabled="!isEditMode && isRPPCompleted('Pertemuan ' + n)" :class="{'text-slate-400 bg-slate-100': !isEditMode && isRPPCompleted('Pertemuan ' + n)}">
+                                Pertemuan {{ n }}: {{ getRPPTitle(n) }} {{ (!isEditMode && isRPPCompleted('Pertemuan ' + n)) ? '🔒 (Sudah Dilaksanakan)' : '' }}
+                            </option>
+                            <option value="Lainnya">Lainnya (Materi Khusus / Klinik Lomba / Non-RPP)</option>
+                        </select>
+
+                        <div v-if="formPresensi.rpp === 'Lainnya'" class="space-y-1">
+                            <label class="block text-[10px] font-bold text-amber-700 uppercase tracking-wider">Topik/Judul Pertemuan Khusus</label>
+                            <input v-model="formPresensi.customRppTitle" type="text" placeholder="Tuliskan topik kegiatan, contoh: Bimbingan Proposal BRIN Youth" class="w-full bg-amber-50/50 px-4 py-3 rounded-xl border border-amber-300 text-xs text-slate-900 focus:outline-none focus:border-amber-500 transition-all" required>
+                        </div>
+                    </div>
+
+                    <!-- Multi-Aspect Classroom Environment Fields -->
+                    <div class="space-y-3">
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">Evaluasi Multi-Kondisi Lapangan</label>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Partisipasi Siswa</label>
+                                <select v-model="formPresensi.kondisiAntusiasme" class="w-full bg-slate-100/80 px-3 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-600 transition-all">
+                                    <option value="Sangat Antusias & Ramai">Sangat Antusias & Ramai</option>
+                                    <option value="Kondusif Normal">Kondusif Normal</option>
+                                    <option value="Kurang Antusias / Pasif">Kurang Antusias / Pasif</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Fasilitas / Alat Lab</label>
+                                <select v-model="formPresensi.kondisiFasilitas" class="w-full bg-slate-100/80 px-3 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-600 transition-all">
+                                    <option value="Fasilitas Lengkap">Fasilitas Lengkap</option>
+                                    <option value="Proyektor / AC Bermasalah">Proyektor / AC Bermasalah</option>
+                                    <option value="Bahan Praktikum Kurang">Bahan Lab Kurang</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Faktor Luar / Cuaca</label>
+                                <select v-model="formPresensi.kondisiCuaca" class="w-full bg-slate-100/80 px-3 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-600 transition-all">
+                                    <option value="Cerah / Normal">Cerah / Normal</option>
+                                    <option value="Hujan Deras / Bencana">Hujan Deras</option>
+                                    <option value="Ada Acara Sekolah Lain">Ada Rapat / Event Sekolah</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Persentase Pencapaian RPP Slider -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Persentase Target RPP Terlewati</label>
+                            <span class="text-xs font-extrabold text-indigo-600 font-mono">{{ formPresensi.persentaseRpp }}%</span>
+                        </div>
+                        <input type="range" min="0" max="100" step="5" v-model.number="formPresensi.persentaseRpp" class="w-full accent-indigo-600 bg-slate-200 rounded-lg cursor-pointer">
+                    </div>
+
+                    <!-- Catatan Hambatan / Isu -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Catatan Hambatan / Kebutuhan Lab Tambahan</label>
+                        <textarea v-model="formPresensi.hambatan" rows="2" placeholder="Contoh: Bekerja lancar, namun peralatan lab bioplastik kurang 2 set..." class="w-full bg-slate-100/80 px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-600 transition-all"></textarea>
+                    </div>
+
+                    <!-- Foto Dokumentasi -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Foto Dokumentasi Kegiatan (Bukti Fisik Mengajar)</label>
+                        <input type="file" ref="fotoInput" accept="image/*" class="hidden" @change="handleFotoChange">
+                        <div class="border border-dashed border-slate-300 bg-slate-50 p-4 rounded-2xl flex items-center justify-between text-xs">
+                            <span class="text-slate-600 truncate">
+                                <i class="fa-solid fa-camera mr-2 text-emerald-600"></i>{{ formPresensi.fotoName || 'Belum ada foto terpilih...' }}
+                            </span>
+                            <button type="button" @click="fotoInput.click()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-1.5 rounded-xl text-[10px] border border-indigo-200 transition-all cursor-pointer">
+                                Pilih Foto
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" :disabled="isSubmitting" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-2xl text-xs transition-all shadow-md shadow-emerald-600/20 cursor-pointer flex items-center justify-center gap-2">
+                        <i v-if="isSubmitting" class="fa-solid fa-circle-notch animate-spin"></i>
+                        <span v-else><i class="fa-solid fa-paper-plane mr-1"></i> {{ isEditMode ? 'Simpan Perubahan Jurnal' : 'Kirim Presensi & Jurnal KBM Pelatih' }}</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Right Panel: Log Presensi Terbaru Sekolah Terpilih -->
+            <div class="lg:col-span-5 bg-white border border-slate-200 p-6 md:p-8 rounded-3xl space-y-4 shadow-sm">
+                <div class="border-b border-slate-200 pb-3 flex justify-between items-center">
+                    <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Riwayat Jurnal KBM Terbaru</h3>
+                    <button @click="fetchDataFromGAS" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold flex items-center gap-1">
+                        <i :class="['fa-solid fa-arrows-rotate', isLoadingHonor ? 'animate-spin' : '']"></i> Refresh
+                    </button>
+                </div>
+
+                <div class="space-y-3 max-h-[620px] overflow-y-auto no-scrollbar">
+                    <div v-for="log in filteredJurnalLogs" :key="log.id || log.waktu" class="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-2.5">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span v-for="p in getPelatihArray(log)" :key="p" class="bg-indigo-50 text-indigo-700 text-[9px] font-bold px-2 py-0.5 rounded border border-indigo-200">
+                                        {{ p }}
+                                    </span>
+                                </div>
+                                <h4 class="text-xs font-bold text-slate-900 mt-1.5">
+                                    {{ (log.rpp || log.RPP_Ke) === 'Lainnya' ? (log.customRppTitle || log.Custom_RPP_Title) : (log.rpp || log.RPP_Ke) }}
+                                </h4>
+                            </div>
+                            <span class="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-bold">
+                                📅 {{ getRowTanggal(log) }}
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-600 leading-relaxed italic">"{{ log.hambatan || log.Catatan_Hambatan || 'KBM berjalan lancar tanpa kendala.' }}"</p>
+                        
+                        <div class="flex flex-wrap gap-2 text-[9px] text-slate-600 pt-1 border-t border-slate-200">
+                            <span class="bg-slate-200/80 px-2 py-0.5 rounded">Partisipasi: <strong class="text-slate-800">{{ log.kondisiAntusiasme || log.Kondisi_Antusiasme || '-' }}</strong></span>
+                            <span class="bg-slate-200/80 px-2 py-0.5 rounded">Fasilitas: <strong class="text-slate-800">{{ log.kondisiFasilitas || log.Kondisi_Fasilitas || '-' }}</strong></span>
+                            <span class="bg-slate-200/80 px-2 py-0.5 rounded">Cuaca: <strong class="text-slate-800">{{ log.kondisiCuaca || log.Kondisi_Cuaca || '-' }}</strong></span>
+                        </div>
+
+                        <!-- TAUTAN FOTO DOKUMENTASI GOOGLE DRIVE (KONDISIONAL & AKURAT) -->
+                        <div class="pt-2 border-t border-dashed border-slate-200 flex items-center justify-between">
+                            <a v-if="log.linkFotoDrive || log.Link_Foto_Drive || log.link_foto_drive || log.foto" 
+                               :href="log.linkFotoDrive || log.Link_Foto_Drive || log.link_foto_drive || log.foto" 
+                               target="_blank" 
+                               class="inline-flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[10px] font-bold px-3 py-1.5 rounded-xl border border-emerald-200 transition-all shadow-sm cursor-pointer">
+                                <i class="fa-solid fa-camera text-emerald-600"></i>
+                                <span>Buka Foto Dokumentasi KBM</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[8px] ml-0.5 text-emerald-500"></i>
+                            </a>
+
+                            <span v-else class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-400 text-[10px] font-medium px-2.5 py-1 rounded-lg border border-slate-200">
+                                <i class="fa-solid fa-image-slash"></i>
+                                <span>Foto Belum Diunggah</span>
+                            </span>
+
+                            <span class="text-[9px] text-slate-400 font-mono">
+                                {{ (log.linkFotoDrive || log.Link_Foto_Drive || log.link_foto_drive || log.foto) ? 'Tersimpan di Drive' : 'Tidak Ada Bukti' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- EMPTY STATE FOR JURNAL LOGS -->
+                    <div v-if="filteredJurnalLogs.length === 0" class="border border-dashed border-slate-300 p-8 rounded-2xl text-center space-y-3 bg-slate-50">
+                        <i class="fa-solid fa-book-bookmark text-2xl text-slate-400"></i>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-700">Belum Ada Jurnal KBM Tersimpan</h4>
+                            <p class="text-[11px] text-slate-500 mt-1">Pelatih belum pernah menginput jurnal mengajar di {{ selectedSekolah }}. Isi form di sebelah kiri untuk mencatat KBM perdana!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- SECTION 2: REKAP ABSENSI, TUGAS & PRESTASI SISWA -->
+        <div v-if="activeTab === 'matriks_absen'" class="space-y-6 flex-1">
+            <div class="bg-white border border-slate-200 p-6 md:p-8 rounded-3xl space-y-6 shadow-sm">
+                
+                <!-- Table Header with Search Filter -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-200 pb-4 gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-widest bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg">
+                                {{ selectedSekolah }}
+                            </span>
+                            <span class="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-indigo-200">
+                                Real-time Sync dari GSheets
+                            </span>
+                        </div>
+                        <h3 class="text-lg font-extrabold text-slate-900 tracking-tight mt-2">Rekap Absensi, Tugas & Prestasi Siswa</h3>
+                        <p class="text-xs text-slate-500">Ringkasan total kehadiran, jumlah pengumpulan tugas, dan perolehan prestasi seluruh siswa.</p>
+                    </div>
+
+                    <!-- Search Input & Refresh Button -->
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <div class="w-full sm:w-64 relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input v-model="searchSiswaQuery" type="text" placeholder="Cari nama siswa / kelas..." class="w-full bg-slate-100/80 pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-600 transition-all">
+                        </div>
+                        <button @click="fetchDataFromGAS" :disabled="isLoadingHonor" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2.5 rounded-xl transition-all shadow-md shadow-emerald-600/20 cursor-pointer flex items-center gap-1.5 shrink-0">
+                            <i :class="['fa-solid', isLoadingHonor ? 'fa-circle-notch animate-spin' : 'fa-arrows-rotate']"></i>
+                            <span>Sync Data</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Legend Indicator Badges -->
+                <div class="flex flex-wrap items-center gap-2 text-[10px] bg-slate-100/80 p-3 rounded-2xl border border-slate-200">
+                    <span class="text-slate-600 font-bold mr-2">Keterangan Kolom Rekap:</span>
+                    <span class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded font-semibold"><i class="fa-solid fa-user-check text-[8px] mr-1"></i>Absen = Total Kehadiran Sesi KBM</span>
+                    <span class="bg-indigo-100 text-indigo-800 border border-indigo-300 px-2 py-0.5 rounded font-semibold"><i class="fa-solid fa-file-arrow-up text-[8px] mr-1"></i>Tugas = Total Berkas Mini-Paper Terkumpul</span>
+                    <span class="bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded font-semibold"><i class="fa-solid fa-trophy text-[8px] mr-1"></i>Prestasi = Total Piagam/Sertifikat Lomba</span>
+                </div>
+
+                <!-- Responsive Matrix Table -->
+                <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                    <table class="w-full text-left text-xs whitespace-nowrap">
+                        <thead class="bg-slate-100 text-slate-600 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="p-3.5">No</th>
+                                <th class="p-3.5">Nama Siswa</th>
+                                <th class="p-3.5">Kelas</th>
+                                <th class="p-3.5 text-center">Absen</th>
+                                <th class="p-3.5 text-center">Tugas</th>
+                                <th class="p-3.5 text-center">Prestasi</th>
+                                <th class="p-3.5 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white">
+                            <tr v-for="(student, index) in searchedStudents" :key="student.id || index" class="hover:bg-slate-50 transition-colors">
+                                <td class="p-3.5 font-mono text-slate-400 font-bold">{{ index + 1 }}</td>
+                                <td class="p-3.5 font-bold text-slate-900 flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700 text-[10px] font-bold">
+                                        {{ student.nama ? student.nama.charAt(0) : 'S' }}
+                                    </div>
+                                    <span>{{ student.nama }}</span>
+                                </td>
+                                <td class="p-3.5 text-slate-600 font-semibold">{{ student.kelas }}</td>
+                                
+                                <td class="p-3.5 text-center font-mono font-bold text-emerald-700 bg-emerald-50/50">
+                                    {{ getStudentHadirCount(student) }} Sesi
+                                </td>
+
+                                <td class="p-3.5 text-center font-mono font-bold text-indigo-700 bg-indigo-50/50">
+                                    {{ student.tugas || 0 }} Berkas
+                                </td>
+
+                                <td class="p-3.5 text-center font-mono font-bold text-amber-700 bg-amber-50/50">
+                                    {{ student.prestasi || 0 }} Sertifikat
+                                </td>
+
+                                <td class="p-3.5 text-right">
+                                    <button @click="openStudentModal(student)" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-1.5 rounded-xl border border-indigo-200 text-[10px] transition-all cursor-pointer flex items-center gap-1.5 ml-auto">
+                                        <i class="fa-solid fa-circle-info"></i> Detail
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <tr v-if="searchedStudents.length === 0">
+                                <td colspan="7" class="p-12 text-center">
+                                    <div class="max-w-md mx-auto space-y-3">
+                                        <div class="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 mx-auto text-xl">
+                                            <i class="fa-solid fa-users-slash"></i>
+                                        </div>
+                                        <h4 class="text-sm font-bold text-slate-900">Belum Ada Data Siswa Terdaftar</h4>
+                                        <p class="text-xs text-slate-500 leading-relaxed">
+                                            Siswa di {{ selectedSekolah }} belum melakukan registrasi. Bagikan link Portal Siswa untuk memulai pendaftaran mandiri!
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION 3: REKAP HONORARIUM PELATIH -->
+        <div v-if="activeTab === 'honor'" class="space-y-6 flex-1">
+            <div class="bg-white border border-slate-200 p-6 md:p-8 rounded-3xl space-y-6 shadow-sm">
+                <div class="border-b border-slate-200 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-2.5 py-0.5 rounded border border-emerald-200 uppercase">
+                                Google Apps Script (GAS)
+                            </span>
+                            <span class="bg-indigo-50 text-indigo-700 text-[9px] font-bold px-2.5 py-0.5 rounded border border-indigo-200">
+                                Direct Fetch Spreadsheet
+                            </span>
+                        </div>
+                        <h3 class="text-lg font-extrabold text-slate-900 tracking-tight">Rekapitulasi Kehadiran & Honorarium Pelatih</h3>
+                        <p class="text-xs text-slate-500">Membaca data rekapitulasi mengajar langsung dari Google Sheets via GAS Web App.</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <button @click="fetchDataFromGAS" :disabled="isLoadingHonor" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-md shadow-emerald-600/20 cursor-pointer flex items-center gap-2">
+                            <i :class="['fa-solid', isLoadingHonor ? 'fa-circle-notch animate-spin' : 'fa-arrows-rotate']"></i>
+                            <span>{{ isLoadingHonor ? 'Tarik Data via GAS...' : 'Tarik Data dari Spreadsheet (GAS)' }}</span>
+                        </button>
+
+                        <span class="bg-emerald-50 text-emerald-800 text-xs font-bold px-3 py-2 rounded-xl border border-emerald-200">
+                            Periode Aktif: Semester Genap
+                        </span>
+                    </div>
+                </div>
+
+                <!-- CARDS REKAP HONOR -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div v-for="coach in coachList" :key="coach" class="bg-slate-50 border border-slate-200 p-6 rounded-3xl space-y-4 relative overflow-hidden shadow-sm">
+                        <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-9 h-9 rounded-xl bg-indigo-100 border border-indigo-200 flex items-center justify-center text-indigo-700 font-bold text-sm">
+                                    {{ coach.charAt(0) }}
+                                </div>
+                                <h4 class="text-sm font-bold text-slate-900">{{ coach }}</h4>
+                            </div>
+                            <span class="text-[9px] font-bold text-emerald-800 uppercase tracking-widest bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200">
+                                Pelatih Resmi
+                            </span>
+                        </div>
+
+                        <div class="space-y-2 text-xs text-slate-600">
+                            <div class="flex justify-between items-center bg-white border border-slate-200 px-3 py-2 rounded-xl">
+                                <span>SMAN 60 Jakarta</span>
+                                <strong class="text-slate-900 font-mono">{{ getCoachAttendanceGAS(coach, 'sman60') }} Sesi</strong>
+                            </div>
+                            <div class="flex justify-between items-center bg-white border border-slate-200 px-3 py-2 rounded-xl">
+                                <span>SMAN 46 Jakarta</span>
+                                <strong class="text-slate-900 font-mono">{{ getCoachAttendanceGAS(coach, 'sman46') }} Sesi</strong>
+                            </div>
+                            <div class="flex justify-between items-center bg-white border border-slate-200 px-3 py-2 rounded-xl">
+                                <span>SMA Dewi Sartika</span>
+                                <strong class="text-slate-900 font-mono">{{ getCoachAttendanceGAS(coach, 'dewi_sartika') }} Sesi</strong>
+                            </div>
+                        </div>
+
+                        <div class="bg-emerald-50/80 border border-emerald-200 p-4 rounded-2xl text-center">
+                            <span class="text-[9px] text-slate-500 uppercase tracking-widest block mb-0.5">Total Presensi Mengajar</span>
+                            <strong class="text-2xl font-black text-emerald-700 font-mono">{{ getTotalCoachAttendanceGAS(coach) }} Pertemuan</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3">
+                    <p class="text-xs text-slate-500">
+                        <i class="fa-solid fa-circle-info text-emerald-600 mr-1.5"></i> Data kehadiran pelatih dibaca secara langsung dari tab <code>REKAP_HONOR_PELATIH</code> melalui Google Apps Script Web App.
+                    </p>
+                    <button @click="fetchDataFromGAS" :disabled="isLoadingHonor" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-6 py-3 rounded-2xl text-xs transition-all shadow-md shadow-emerald-600/20 cursor-pointer flex items-center justify-center gap-2.5">
+                        <i :class="['fa-solid text-sm', isLoadingHonor ? 'fa-circle-notch animate-spin' : 'fa-arrows-rotate']"></i>
+                        <span>{{ isLoadingHonor ? 'Membaca Spreadsheet via GAS...' : 'Tarik Data dari Spreadsheet (GAS)' }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4: REKAP SISWA & LEADERBOARD "SI PALING" -->
+        <div v-if="activeTab === 'leaderboard'" class="space-y-6 flex-1">
+            
+            <div class="border-b border-slate-200 pb-3 flex justify-between items-center">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">Jajaran Peringkat Top 15 "Si Paling"</h3>
+                    <p class="text-xs text-slate-500">Peringkat teratas siswa {{ selectedSekolah }} berdasarkan presensi, laporan, dan prestasi.</p>
+                </div>
+                <span class="text-xs font-mono text-amber-800 bg-amber-50 px-3 py-1 rounded-xl border border-amber-200 font-bold">
+                    Top 15 Ranking System
+                </span>
+            </div>
+
+            <!-- Top 15 Lists Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Category 1: Si Paling Rajin (Top 15) -->
+                <div class="bg-white border border-slate-200 p-5 rounded-3xl space-y-3 shadow-sm">
+                    <div class="flex items-center space-x-3 border-b border-slate-200 pb-3">
+                        <div class="w-9 h-9 rounded-2xl bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-700 text-base">
+                            👑
+                        </div>
+                        <div>
+                            <span class="text-[9px] font-bold text-amber-800 uppercase tracking-widest block">SI PALING RAJIN</span>
+                            <h4 class="text-xs font-bold text-slate-900">Top 15 Kehadiran Fisik</h4>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 max-h-96 overflow-y-auto no-scrollbar">
+                        <div v-for="(student, idx) in getTopStudents('attendance', 15)" :key="student.id || idx" @click="openStudentModal(student)" class="bg-slate-50 hover:bg-slate-100 p-3 rounded-2xl border border-slate-200 cursor-pointer transition-all flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span :class="['w-6 h-6 rounded-lg text-[10px] font-black flex items-center justify-center font-mono', idx === 0 ? 'bg-amber-400 text-slate-950' : idx === 1 ? 'bg-slate-300 text-slate-950' : idx === 2 ? 'bg-amber-600 text-white' : 'bg-slate-200 text-slate-600']">
+                                    {{ idx + 1 }}
+                                </span>
+                                <div>
+                                    <strong class="text-xs font-bold text-slate-900 block truncate max-w-[140px]">{{ student.nama }}</strong>
+                                    <span class="text-[9px] text-slate-500">{{ student.kelas }}</span>
+                                </div>
+                            </div>
+                            <span class="text-xs font-extrabold text-amber-800 bg-amber-100 px-2 py-1 rounded-lg border border-amber-200">
+                                {{ getStudentHadirCount(student) }} Hadir
+                            </span>
+                        </div>
+
+                        <div v-if="getTopStudents('attendance', 15).length === 0" class="p-6 text-center border border-dashed border-slate-300 rounded-2xl text-slate-400 text-xs">
+                            Belum ada data siswa terdaftar di {{ selectedSekolah }}.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category 2: Si Paling Tugas (Top 15) -->
+                <div class="bg-white border border-slate-200 p-5 rounded-3xl space-y-3 shadow-sm">
+                    <div class="flex items-center space-x-3 border-b border-slate-200 pb-3">
+                        <div class="w-9 h-9 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center text-indigo-700 text-base">
+                            📝
+                        </div>
+                        <div>
+                            <span class="text-[9px] font-bold text-indigo-700 uppercase tracking-widest block">SI PALING TUGAS</span>
+                            <h4 class="text-xs font-bold text-slate-900">Top 15 Pengumpulan Mini-Paper</h4>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 max-h-96 overflow-y-auto no-scrollbar">
+                        <div v-for="(student, idx) in getTopStudents('tugas', 15)" :key="student.id || idx" @click="openStudentModal(student)" class="bg-slate-50 hover:bg-slate-100 p-3 rounded-2xl border border-slate-200 cursor-pointer transition-all flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span :class="['w-6 h-6 rounded-lg text-[10px] font-black flex items-center justify-center font-mono', idx === 0 ? 'bg-indigo-600 text-white' : idx === 1 ? 'bg-slate-300 text-slate-950' : idx === 2 ? 'bg-indigo-800 text-white' : 'bg-slate-200 text-slate-600']">
+                                    {{ idx + 1 }}
+                                </span>
+                                <div>
+                                    <strong class="text-xs font-bold text-slate-900 block truncate max-w-[140px]">{{ student.nama }}</strong>
+                                    <span class="text-[9px] text-slate-500">{{ student.kelas }}</span>
+                                </div>
+                            </div>
+                            <span class="text-xs font-extrabold text-indigo-700 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-200">
+                                {{ student.tugas || 0 }} Berkas
+                            </span>
+                        </div>
+
+                        <div v-if="getTopStudents('tugas', 15).length === 0" class="p-6 text-center border border-dashed border-slate-300 rounded-2xl text-slate-400 text-xs">
+                            Belum ada data siswa terdaftar di {{ selectedSekolah }}.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category 3: Si Paling Prestasi (Top 15) -->
+                <div class="bg-white border border-slate-200 p-5 rounded-3xl space-y-3 shadow-sm">
+                    <div class="flex items-center space-x-3 border-b border-slate-200 pb-3">
+                        <div class="w-9 h-9 rounded-2xl bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-700 text-base">
+                            🏆
+                        </div>
+                        <div>
+                            <span class="text-[9px] font-bold text-emerald-800 uppercase tracking-widest block">SI PALING PRESTASI</span>
+                            <h4 class="text-xs font-bold text-slate-900">Top 15 Sertifikat Luar</h4>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 max-h-96 overflow-y-auto no-scrollbar">
+                        <div v-for="(student, idx) in getTopStudents('prestasi', 15)" :key="student.id || idx" @click="openStudentModal(student)" class="bg-slate-50 hover:bg-slate-100 p-3 rounded-2xl border border-slate-200 cursor-pointer transition-all flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span :class="['w-6 h-6 rounded-lg text-[10px] font-black flex items-center justify-center font-mono', idx === 0 ? 'bg-emerald-500 text-white' : idx === 1 ? 'bg-slate-300 text-slate-950' : idx === 2 ? 'bg-emerald-800 text-white' : 'bg-slate-200 text-slate-600']">
+                                    {{ idx + 1 }}
+                                </span>
+                                <div>
+                                    <strong class="text-xs font-bold text-slate-900 block truncate max-w-[140px]">{{ student.nama }}</strong>
+                                    <span class="text-[9px] text-slate-500">{{ student.kelas }}</span>
+                                </div>
+                            </div>
+                            <span class="text-xs font-extrabold text-emerald-800 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">
+                                {{ student.prestasi || 0 }} Piagam
+                            </span>
+                        </div>
+
+                        <div v-if="getTopStudents('prestasi', 15).length === 0" class="p-6 text-center border border-dashed border-slate-300 rounded-2xl text-slate-400 text-xs">
+                            Belum ada data siswa terdaftar di {{ selectedSekolah }}.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION 5: REKOMENDASI DSS KURIKULUM -->
+        <div v-if="activeTab === 'dss'" class="space-y-6 flex-1">
+            <div class="bg-white border border-slate-200 p-6 md:p-8 rounded-3xl space-y-6 shadow-sm">
+                <div class="border-b border-slate-200 pb-4 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-extrabold text-slate-900 tracking-tight">Decision Support System (DSS) Kurikulum</h3>
+                        <p class="text-xs text-slate-500">Analisis otomatis kesesuaian target RPP dengan kondisi nyata di {{ selectedSekolah }}.</p>
+                    </div>
+                    <a href="https://drive.google.com" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-md shadow-indigo-600/20">
+                        <i class="fa-brands fa-google-drive mr-1.5"></i> Buka Drive RPP & Bahan Ajar
+                    </a>
+                </div>
+
+                <!-- Timeline Progress Bar RPP (Cerdas & Kondisional per RPP) -->
+                <div class="bg-slate-50 border border-slate-200 p-6 rounded-3xl space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Progres Capaian RPP {{ selectedSekolah }}</span>
+                        <span class="text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-2.5 py-0.5 rounded-lg">
+                            {{ getCompletedRPPCount() }} dari 6 RPP Selesai
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-6 gap-2">
+                        <div v-for="n in 6" :key="n" :class="['p-3 rounded-2xl border text-center transition-all', isRPPCompleted('Pertemuan ' + n) ? 'bg-emerald-100 border-emerald-300 text-emerald-900 font-bold' : n === getNextRecommendedRPP() ? 'bg-indigo-50 border-indigo-300 text-indigo-900 font-bold animate-pulse' : 'bg-slate-100 border-slate-200 text-slate-400']">
+                            <span class="text-[9px] font-bold block uppercase mb-1">RPP {{ n }}</span>
+                            <i :class="['fa-solid text-sm', isRPPCompleted('Pertemuan ' + n) ? 'fa-circle-check text-emerald-600' : n === getNextRecommendedRPP() ? 'fa-bullseye text-indigo-600' : 'fa-lock']"></i>
+                            <span class="text-[9px] block mt-1 truncate">{{ getRPPTitle(n) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Recommendations Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-indigo-50/70 border border-indigo-200 p-6 rounded-3xl space-y-3">
+                        <div class="flex items-center space-x-2 text-indigo-700 text-xs font-bold uppercase tracking-wider">
+                            <i class="fa-solid fa-bullseye"></i><span>Rekomendasi RPP Sesi Berikutnya</span>
+                        </div>
+                        <h4 class="text-base font-extrabold text-slate-900">
+                            {{ getNextRecommendedRPP() <= 6 ? ('Lanjutkan ke RPP ' + getNextRecommendedRPP() + ': ' + getRPPTitle(getNextRecommendedRPP())) : 'Seluruh RPP 1-6 Telah Tuntas!' }}
+                        </h4>
+                        <p class="text-xs text-slate-600 leading-relaxed" v-if="filteredJurnalLogs.length === 0">
+                            Jurnal mengajar pelatih untuk {{ selectedSekolah }} masih kosong (0 Pertemuan). DSS secara otomatis merekomendasikan **RPP 1: {{ getRPPTitle(1) }}** sebagai materi perdana KBM.
+                        </p>
+                        <p class="text-xs text-slate-600 leading-relaxed" v-else-if="getNextRecommendedRPP() <= 6">
+                            Berdasarkan histori jurnal KBM di {{ selectedSekolah }}, materi RPP {{ getNextRecommendedRPP() }} belum pernah dilaksanakan. Disarankan segera menyelesaikan RPP {{ getNextRecommendedRPP() }}.
+                        </p>
+                        <p class="text-xs text-slate-600 leading-relaxed" v-else>
+                            Semua target materi RPP 1 sampai 6 untuk {{ selectedSekolah }} telah lengkap dilaksanakan. Disarankan melanjutkan ke sesi Klinik Lomba / Evaluasi Khusus (Pilihan Lainnya).
+                        </p>
+                    </div>
+
+                    <div class="bg-amber-50/70 border border-amber-200 p-6 rounded-3xl space-y-3">
+                        <div class="flex items-center space-x-2 text-amber-800 text-xs font-bold uppercase tracking-wider">
+                            <i class="fa-solid fa-lightbulb"></i><span>Saran Tindakan & Bahan Ajar</span>
+                        </div>
+                        <h4 class="text-base font-extrabold text-slate-900">{{ getDynamicActionTitle() }}</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed">{{ getDynamicActionAdvice() }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LARGE PROMINENT SUCCESS MODAL POP-UP -->
+        <div v-if="successModal.show" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white border border-emerald-300 w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl text-center relative animate-scale-in">
+                <div class="w-20 h-20 rounded-3xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-600 text-4xl mx-auto shadow-sm">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="text-xl font-black text-slate-900 tracking-tight">DATA BERHASIL DISIMPAN!</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Presensi & Jurnal KBM Pelatih untuk <strong class="text-emerald-700">{{ successModal.data.sekolah }}</strong> telah resmi dicatat ke database.
+                    </p>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-left space-y-2 text-xs">
+                    <div class="flex justify-between border-b border-slate-200 pb-2">
+                        <span class="text-slate-500">Tanggal Kegiatan:</span>
+                        <strong class="text-slate-900">{{ successModal.data.tanggal }}</strong>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-200 pb-2">
+                        <span class="text-slate-500">Materi / RPP:</span>
+                        <strong class="text-indigo-700">{{ successModal.data.rpp }}</strong>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Pelatih Hadir:</span>
+                        <strong class="text-emerald-700">{{ successModal.data.pelatih }}</strong>
+                    </div>
+                </div>
+                <button @click="closeSuccessModal" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-2xl text-xs transition-all shadow-md shadow-emerald-600/20 cursor-pointer">
+                    <i class="fa-solid fa-check mr-1.5"></i> Siap, Tutup & Lihat Riwayat Jurnal
+                </button>
+            </div>
+        </div>
+
+        <!-- LARGE PROMINENT ERROR MODAL POP-UP -->
+        <div v-if="errorModal.show" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white border border-rose-300 w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl text-center relative animate-scale-in">
+                <div class="w-20 h-20 rounded-3xl bg-rose-100 border border-rose-300 flex items-center justify-center text-rose-600 text-4xl mx-auto shadow-sm">
+                    <i class="fa-solid fa-circle-xmark"></i>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="text-xl font-black text-slate-900 tracking-tight">GAGAL MENYIMPAN!</h3>
+                    <p class="text-xs text-rose-700 leading-relaxed">{{ errorModal.msg }}</p>
+                </div>
+                <button @click="errorModal.show = false" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3.5 rounded-2xl text-xs transition-all shadow-md shadow-rose-600/20 cursor-pointer">
+                    <i class="fa-solid fa-rotate-left mr-1.5"></i> Coba Lagi
+                </button>
+            </div>
+        </div>
+
+        <!-- MODAL POP-UP PROFIL & PORTOFOLIO SISWA -->
+        <div v-if="selectedStudentModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white border border-slate-200 w-full max-w-lg rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl relative animate-scale-in">
+                <button @click="selectedStudentModal = null" class="absolute top-5 right-5 text-slate-400 hover:text-slate-800 font-bold text-sm bg-slate-100 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                    ✕
+                </button>
+
+                <div class="flex items-center space-x-4 border-b border-slate-200 pb-4">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700 text-lg font-bold">
+                        {{ selectedStudentModal.nama ? selectedStudentModal.nama.charAt(0) : 'S' }}
+                    </div>
+                    <div>
+                        <h3 class="text-base font-extrabold text-slate-900">{{ selectedStudentModal.nama }}</h3>
+                        <p class="text-xs text-slate-500">Kelas: <strong class="text-slate-800">{{ selectedStudentModal.kelas }}</strong> | Sekolah: <strong class="text-slate-800">{{ selectedStudentModal.sekolah || selectedSekolah }}</strong></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                        <span class="text-[9px] text-slate-500 uppercase block mb-0.5">Total Absen</span>
+                        <strong class="text-sm font-extrabold text-emerald-700">{{ getStudentHadirCount(selectedStudentModal) }} Sesi</strong>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                        <span class="text-[9px] text-slate-500 uppercase block mb-0.5">Total Tugas</span>
+                        <strong class="text-sm font-extrabold text-indigo-700">{{ selectedStudentModal.tugas || 0 }} Berkas</strong>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                        <span class="text-[9px] text-slate-500 uppercase block mb-0.5">Prestasi</span>
+                        <strong class="text-sm font-extrabold text-amber-700">{{ selectedStudentModal.prestasi || 0 }} Sertifikat</strong>
+                    </div>
+                </div>
+
+                <div class="space-y-3 pt-2">
+                    <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-brands fa-google-drive text-emerald-600"></i> Link Folder Google Drive Siswa
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <a :href="selectedStudentModal.linkDriveTugas || 'https://drive.google.com'" target="_blank" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 p-3.5 rounded-2xl flex items-center justify-between group transition-all">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-file-arrow-up"></i>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] font-bold text-indigo-900 block">Drive Tugas</span>
+                                    <span class="text-[9px] text-indigo-600">Buka Berkas</span>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-indigo-400 group-hover:text-indigo-700 text-xs transition-colors"></i>
+                        </a>
+
+                        <a :href="selectedStudentModal.linkDrivePrestasi || 'https://drive.google.com'" target="_blank" class="bg-amber-50 hover:bg-amber-100 border border-amber-200 p-3.5 rounded-2xl flex items-center justify-between group transition-all">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-trophy"></i>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] font-bold text-amber-900 block">Drive Prestasi</span>
+                                    <span class="text-[9px] text-amber-600">Buka Sertifikat</span>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-amber-400 group-hover:text-amber-700 text-xs transition-colors"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Berkas Mini-Paper Diunggah</h4>
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2 max-h-32 overflow-y-auto no-scrollbar text-xs">
+                        <div v-for="n in (selectedStudentModal.tugas || 0)" :key="n" class="flex justify-between items-center text-slate-700 bg-white p-2 rounded-xl border border-slate-200">
+                            <span><i class="fa-solid fa-file-lines mr-2 text-indigo-600"></i>Naskah_Mini_Paper_Pertemuan_{{ n }}.pdf</span>
+                            <span class="text-[9px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Terverifikasi</span>
+                        </div>
+                        <div v-if="!selectedStudentModal.tugas || selectedStudentModal.tugas === 0" class="text-slate-400 text-center py-3">Belum ada tugas diunggah.</div>
+                    </div>
+                </div>
+
+                <button @click="selectedStudentModal = null" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl text-xs transition-all cursor-pointer">
+                    Tutup Profil
+                </button>
+            </div>
+        </div>
+
+        <footer class="mt-12 pt-6 border-t border-slate-200 text-center text-[10px] text-slate-400 uppercase tracking-widest font-semibold flex-none">
+            Sistem Terpadu Pelatih KIR • SMAN 60 • SMAN 46 • SMA Dewi Sartika © 2026
+        </footer>
+
+    </div>
+
+    <!-- LOGIKA JAVASCRIPT & STATE MANAGEMENT (Vue.js 3) -->
+    <script>
+        const { createApp, ref, computed, onMounted, watch } = Vue;
+        
+        // 1. URL DARI GOOGLE APPS SCRIPT SPREADSHEET PELATIH (HONOR & JURNAL)
+        const GAS_URL_PELATIH = "https://script.google.com/macros/s/AKfycbwDmniN2sc-61War-dzlSD1QDXeInHi-4_2DstW1qJWjlqnuqATyThHKW2f4Hl2xsb6dA/exec";
+        
+        // 2. URL DARI GOOGLE APPS SCRIPT SPREADSHEET SISWA TERBARU
+        const GAS_URL_SISWA = "https://script.google.com/macros/s/AKfycbw56daGQ5lgI1DbVFQj8ZN_NaTCRps89V7NAvnp7VjrlnRiCIXSP12eryxoqptzKHvc/exec";
+        
+        const N8N_WEBHOOK_URL = "https://n8n-oc9is1kywcyb.jkt5.sumopod.my.id";
+
+        createApp({
+            setup() {
+                const activeTab = ref('presensi');
+                const selectedSekolah = ref('SMAN 60 JAKARTA');
+                const coachList = ['Edgart', 'Rafly', 'Melinda'];
+                const isSubmitting = ref(false);
+                const isLoadingHonor = ref(false);
+                const fotoInput = ref(null);
+                const selectedStudentModal = ref(null);
+                const searchSiswaQuery = ref('');
+                
+                const isSimulationMode = ref(false);
+                const isEditMode = ref(false);
+
+                const successModal = ref({
+                    show: false,
+                    data: { sekolah: '', tanggal: '', rpp: '', pelatih: '' }
+                });
+                const errorModal = ref({
+                    show: false,
+                    msg: ''
+                });
+
+                const clockTime = ref('');
+                const updateClock = () => {
+                    const now = new Date();
+                    clockTime.value = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                };
+                updateClock();
+                setInterval(updateClock, 1000);
+
+                const formPresensi = ref({
+                    tanggalKegiatan: new Date().toISOString().split('T')[0],
+                    pelatih: ['Edgart'],
+                    rpp: 'Pertemuan 1',
+                    customRppTitle: '',
+                    kondisiAntusiasme: 'Sangat Antusias & Ramai',
+                    kondisiFasilitas: 'Fasilitas Lengkap',
+                    kondisiCuaca: 'Cerah / Normal',
+                    persentaseRpp: 85,
+                    hambatan: '',
+                    fotoName: '',
+                    rawFoto: null
+                });
+
+                const setTanggalToday = () => {
+                    formPresensi.value.tanggalKegiatan = new Date().toISOString().split('T')[0];
+                };
+
+                const liveJurnalLogs = ref([]);
+                const liveStudents = ref([]);
+                const liveHonorariumGAS = ref([]);
+
+                const mockJurnalLogs = ref([
+                    { id: 1, sekolah: 'SMAN 60 JAKARTA', tanggalKegiatan: '2026-07-20', pelatih: ['Edgart', 'Rafly'], rpp: 'Pertemuan 1', customRppTitle: '', kondisiAntusiasme: 'Sangat Antusias & Ramai', kondisiFasilitas: 'Fasilitas Lengkap', kondisiCuaca: 'Cerah / Normal', persentaseRpp: 85, hambatan: 'Praktikum berjalan lancar.', linkFotoDrive: 'https://drive.google.com', waktu: '20/07/2026 16:30' },
+                    { id: 2, sekolah: 'SMAN 46 JAKARTA', tanggalKegiatan: '2026-07-18', pelatih: ['Melinda'], rpp: 'Pertemuan 1', customRppTitle: '', kondisiAntusiasme: 'Kondusif Normal', kondisiFasilitas: 'Proyektor / AC Bermasalah', kondisiCuaca: 'Hujan Deras', persentaseRpp: 90, hambatan: 'AC kelas mati.', linkFotoDrive: 'https://drive.google.com', waktu: '18/07/2026 15:45' }
+                ]);
+
+                const mockStudents = ref([
+                    { id: 's1', sekolah: 'SMAN 60 JAKARTA', nama: 'Ipeh Rohimah', kelas: 'X-2', hadir: 6, tugas: 5, prestasi: 4, linkDriveTugas: 'https://drive.google.com', linkDrivePrestasi: 'https://drive.google.com' },
+                    { id: 's2', sekolah: 'SMAN 60 JAKARTA', nama: 'Amira', kelas: 'X-5', hadir: 5, tugas: 6, prestasi: 3, linkDriveTugas: 'https://drive.google.com', linkDrivePrestasi: 'https://drive.google.com' },
+                    { id: 's3', sekolah: 'SMAN 60 JAKARTA', nama: 'Fauziah Salsabillah', kelas: 'X-6', hadir: 4, tugas: 4, prestasi: 5, linkDriveTugas: 'https://drive.google.com', linkDrivePrestasi: 'https://drive.google.com' }
+                ]);
+
+                const mockHonorarium = ref([
+                    { nama: 'Edgart', sman60: 5, sman46: 1, dewi_sartika: 0, total: 6 },
+                    { nama: 'Rafly', sman60: 5, sman46: 1, dewi_sartika: 0, total: 6 },
+                    { nama: 'Melinda', sman60: 3, sman46: 0, dewi_sartika: 0, total: 3 }
+                ]);
+
+                const jurnalLogs = computed(() => isSimulationMode.value ? mockJurnalLogs.value : liveJurnalLogs.value);
+                const allStudents = computed(() => isSimulationMode.value ? mockStudents.value : liveStudents.value);
+
+                const isSameSchool = (sch1, sch2) => {
+                    if (!sch1 || !sch2) return false;
+                    const s1 = sch1.toString().toUpperCase();
+                    const s2 = sch2.toString().toUpperCase();
+                    if (s1 === s2) return true;
+                    if (s1.includes('60') && s2.includes('60')) return true;
+                    if (s1.includes('46') && s2.includes('46')) return true;
+                    if ((s1.includes('DEWI') || s1.includes('SARTIKA')) && (s2.includes('DEWI') || s2.includes('SARTIKA'))) return true;
+                    return false;
+                };
+
+                const getPelatihArray = (jurnalRow) => {
+                    if (!jurnalRow) return [];
+                    const pVal = jurnalRow.pelatih || jurnalRow.Daftar_Pelatih || jurnalRow.Pelatih || [];
+                    if (Array.isArray(pVal)) return pVal;
+                    if (typeof pVal === 'string') {
+                        return pVal.split(',').map(s => s.trim()).filter(Boolean);
+                    }
+                    return [];
+                };
+
+                const getRowSekolah = (row) => {
+                    if (!row) return '';
+                    return row.sekolah || row.Asal_Sekolah || row.Sekolah || row.asal_sekolah || '';
+                };
+
+                const getRowTanggal = (row) => {
+                    if (!row) return '';
+                    return row.tanggalKegiatan || row.Tanggal_Kegiatan || row.tanggal_kegiatan || '';
+                };
+
+                const isCurrentDateAndSchoolLocked = computed(() => {
+                    const targetSch = selectedSekolah.value;
+                    const targetDate = formPresensi.value.tanggalKegiatan;
+                    
+                    return jurnalLogs.value.some(j => {
+                        return isSameSchool(getRowSekolah(j), targetSch) && getRowTanggal(j) === targetDate;
+                    });
+                });
+
+                // FUNGSI CEK STATUS RPP TERKUNCI (ANTI-DUPLIKASI & ANALISIS KELENGKAPAN RPP)
+                const isRPPCompleted = (rppName) => {
+                    if (!rppName) return false;
+                    return filteredJurnalLogs.value.some(j => {
+                        const existingRPP = (j.rpp || j.RPP_Ke || '').toString().trim();
+                        return existingRPP.toLowerCase() === rppName.toLowerCase();
+                    });
+                };
+
+                const autoSelectAvailableRPP = () => {
+                    if (isEditMode.value) return;
+                    for (let n = 1; n <= 6; n++) {
+                        const candidate = 'Pertemuan ' + n;
+                        if (!isRPPCompleted(candidate)) {
+                            formPresensi.value.rpp = candidate;
+                            return;
+                        }
+                    }
+                    formPresensi.value.rpp = 'Lainnya';
+                };
+
+                const enableEditMode = () => {
+                    const targetSch = selectedSekolah.value;
+                    const targetDate = formPresensi.value.tanggalKegiatan;
+                    const existingLog = jurnalLogs.value.find(j => isSameSchool(getRowSekolah(j), targetSch) && getRowTanggal(j) === targetDate);
+
+                    if (existingLog) {
+                        formPresensi.value.pelatih = getPelatihArray(existingLog);
+                        formPresensi.value.rpp = existingLog.rpp || existingLog.RPP_Ke || 'Pertemuan 1';
+                        formPresensi.value.customRppTitle = existingLog.customRppTitle || existingLog.Custom_RPP_Title || '';
+                        formPresensi.value.kondisiAntusiasme = existingLog.kondisiAntusiasme || existingLog.Kondisi_Antusiasme || 'Sangat Antusias & Ramai';
+                        formPresensi.value.kondisiFasilitas = existingLog.kondisiFasilitas || existingLog.Kondisi_Fasilitas || 'Fasilitas Lengkap';
+                        formPresensi.value.kondisiCuaca = existingLog.kondisiCuaca || existingLog.Kondisi_Cuaca || 'Cerah / Normal';
+                        formPresensi.value.persentaseRpp = existingLog.persentaseRpp || existingLog.Persentase_RPP || 85;
+                        formPresensi.value.hambatan = existingLog.hambatan || existingLog.Catatan_Hambatan || '';
+                    }
+                    isEditMode.value = true;
+                };
+
+                const cancelEditMode = () => {
+                    isEditMode.value = false;
+                    autoSelectAvailableRPP();
+                };
+
+                // FUNGSI PENARIK DATA DARI KEDUA SPREADSHEET
+                const fetchDataFromGAS = async () => {
+                    if (isSimulationMode.value) return;
+                    isLoadingHonor.value = true;
+
+                    // 1. Ambil Data Pelatih (Honor & Jurnal)
+                    fetch(GAS_URL_PELATIH)
+                        .then(res => res.json())
+                        .then(json => {
+                            if (json) {
+                                const honorData = json.honorarium || json.data || (Array.isArray(json) ? json : []);
+                                if (Array.isArray(honorData)) liveHonorariumGAS.value = honorData;
+
+                                const jurnalData = json.jurnal_logs || json.jurnalLogs;
+                                if (Array.isArray(jurnalData)) {
+                                    liveJurnalLogs.value = jurnalData;
+                                    autoSelectAvailableRPP();
+                                }
+                            }
+                        })
+                        .catch(err => console.warn("Error Pelatih GAS:", err))
+                        .finally(() => {
+                            isLoadingHonor.value = false;
+                        });
+
+                    // 2. Ambil Data Siswa (Khusus Spreadsheet Siswa)
+                    if (GAS_URL_SISWA && GAS_URL_SISWA.indexOf("http") !== -1) {
+                        fetch(GAS_URL_SISWA)
+                            .then(res => res.json())
+                            .then(json => {
+                                if (json) {
+                                    const sList = json.data || json.matriks_siswa || (Array.isArray(json) ? json : []);
+                                    if (Array.isArray(sList) && sList.length > 0) {
+                                        liveStudents.value = sList;
+                                    }
+                                }
+                            })
+                            .catch(err => console.warn("Error Siswa GAS:", err));
+                    }
+                };
+
+                const toggleDataMode = () => {
+                    isSimulationMode.value = !isSimulationMode.value;
+                    if (!isSimulationMode.value) {
+                        fetchDataFromGAS();
+                    }
+                };
+
+                const onSchoolChange = () => {
+                    isEditMode.value = false;
+                    autoSelectAvailableRPP();
+                    if (!isSimulationMode.value) {
+                        fetchDataFromGAS();
+                    }
+                };
+
+                onMounted(() => {
+                    fetchDataFromGAS();
+                });
+
+                const filteredJurnalLogs = computed(() => {
+                    return jurnalLogs.value.filter(j => isSameSchool(getRowSekolah(j), selectedSekolah.value));
+                });
+
+                watch(filteredJurnalLogs, () => {
+                    autoSelectAvailableRPP();
+                });
+
+                const filteredStudents = computed(() => {
+                    return allStudents.value.filter(s => {
+                        const sch = getRowSekolah(s);
+                        if (!sch || sch.trim() === '') {
+                            return selectedSekolah.value === 'SMAN 60 JAKARTA';
+                        }
+                        return isSameSchool(sch, selectedSekolah.value);
+                    });
+                });
+
+                const searchedStudents = computed(() => {
+                    const query = searchSiswaQuery.value.toLowerCase().trim();
+                    return filteredStudents.value.filter(s => {
+                        const name = (s.nama || '').toLowerCase();
+                        const cls = (s.kelas || '').toLowerCase();
+                        return name.includes(query) || cls.includes(query);
+                    });
+                });
+
+                const getStudentHadirCount = (student) => {
+                    if (!student) return 0;
+                    if (student.presensi_p1_p6) {
+                        return Object.values(student.presensi_p1_p6).filter(v => v === 'Hadir').length;
+                    }
+                    return parseInt(student.hadir || student.absensi || student.absen || 0) || 0;
+                };
+
+                const getRPPTitle = (rppNum) => {
+                    const titles = {
+                        1: "Pengenalan Lab & K3",
+                        2: "Membaca Artikel Ilmiah",
+                        3: "Eksperimen Bioplastik",
+                        4: "Eksperimen Roket Air",
+                        5: "Penelitian Sosial",
+                        6: "Presentasi Review Jurnal"
+                    };
+                    return titles[rppNum] || "Materi Praktikum";
+                };
+
+                // DSS Cerdas: Menghitung total varian RPP unik yang sudah selesai (1 - 6)
+                const getCompletedRPPCount = () => {
+                    let count = 0;
+                    for (let n = 1; n <= 6; n++) {
+                        if (isRPPCompleted('Pertemuan ' + n)) count++;
+                    }
+                    return count;
+                };
+
+                // DSS Cerdas: Menemukan nomor RPP terendah yang masih bolong/belum selesai
+                const getNextRecommendedRPP = () => {
+                    for (let n = 1; n <= 6; n++) {
+                        if (!isRPPCompleted('Pertemuan ' + n)) {
+                            return n;
+                        }
+                    }
+                    return 7; // Indikator jika semua RPP 1 - 6 sudah lengkap
+                };
+
+                const getLatestLogForSchool = () => {
+                    const logs = filteredJurnalLogs.value;
+                    return logs.length > 0 ? logs[0] : null;
+                };
+
+                const getDynamicActionTitle = () => {
+                    const latest = getLatestLogForSchool();
+                    if (!latest) return "Siapkan Peralatan Lab & Cetakan Mini-Paper";
+                    
+                    const fas = latest.kondisiFasilitas || latest.Kondisi_Fasilitas || '';
+                    const ant = latest.kondisiAntusiasme || latest.Kondisi_Antusiasme || '';
+
+                    if (fas.includes('Proyektor') || fas.includes('Bermasalah')) {
+                        return "Gunakan Cetakan/Modul Fisik (Proyektor Bermasalah)";
+                    }
+                    if (ant.includes('Pasif') || ant.includes('Kurang')) {
+                        return "Terapkan Metode Praktikum Interaktif & Ice Breaking";
+                    }
+                    return "Siapkan Peralatan Lab & Cetakan Mini-Paper";
+                };
+
+                const getDynamicActionAdvice = () => {
+                    const latest = getLatestLogForSchool();
+                    if (!latest) return "Disarankan membawa minimal 3 set lembar kerja tulisan tangan tambahan untuk mengantisipasi siswa yang belum mencetak mandiri.";
+                    
+                    const hambatan = latest.hambatan || latest.Catatan_Hambatan || '';
+                    if (hambatan.trim()) {
+                        return `Evaluasi Catatan Sebelumnya: "${hambatan}". Disarankan berkoordinasi dengan pengelola lab sebelum KBM dimulai.`;
+                    }
+                    return "Disarankan membawa minimal 3 set lembar kerja tulisan tangan tambahan untuk mengantisipasi siswa yang belum mencetak mandiri.";
+                };
+
+                const handleFotoChange = (event) => {
+                    const file = event.target.files[0];
+                    if (file) {
+                        formPresensi.value.rawFoto = file;
+                        formPresensi.value.fotoName = file.name;
+                    }
+                };
+
+                const submitPresensiPelatih = async () => {
+                    if (formPresensi.value.pelatih.length === 0) {
+                        errorModal.value.msg = "Harap pilih minimal 1 pelatih yang mengajar pada kegiatan KBM ini!";
+                        errorModal.value.show = true;
+                        return;
+                    }
+
+                    isSubmitting.value = true;
+                    const formData = new FormData();
+                    formData.append("tanggal_kegiatan", formPresensi.value.tanggalKegiatan);
+                    formData.append("sekolah", selectedSekolah.value);
+                    formData.append("pelatih", JSON.stringify(formPresensi.value.pelatih));
+                    formData.append("rpp", formPresensi.value.rpp);
+                    formData.append("custom_rpp_title", formPresensi.value.customRppTitle);
+                    formData.append("kondisi_antusiasme", formPresensi.value.kondisiAntusiasme);
+                    formData.append("kondisi_fasilitas", formPresensi.value.kondisiFasilitas);
+                    formData.append("kondisi_cuaca", formPresensi.value.kondisiCuaca);
+                    formData.append("persentase_rpp", formPresensi.value.persentaseRpp);
+                    formData.append("hambatan", formPresensi.value.hambatan);
+                    if (formPresensi.value.rawFoto) {
+                        formData.append("foto_kegiatan", formPresensi.value.rawFoto);
+                    }
+
+                    try {
+                        await fetch(`${N8N_WEBHOOK_URL}/webhook/pelatih-absen`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                    } catch (e) {
+                        console.log("Logged offline submit", e);
+                    } finally {
+                        const rppTitleDisplay = formPresensi.value.rpp === 'Lainnya' ? formPresensi.value.customRppTitle : formPresensi.value.rpp;
+                        
+                        const targetArray = isSimulationMode.value ? mockJurnalLogs.value : liveJurnalLogs.value;
+                        const existingIdx = targetArray.findIndex(j => isSameSchool(getRowSekolah(j), selectedSekolah.value) && getRowTanggal(j) === formPresensi.value.tanggalKegiatan);
+                        
+                        const newEntry = {
+                            id: existingIdx !== -1 ? targetArray[existingIdx].id : Date.now(),
+                            sekolah: selectedSekolah.value,
+                            Asal_Sekolah: selectedSekolah.value,
+                            tanggalKegiatan: formPresensi.value.tanggalKegiatan,
+                            Tanggal_Kegiatan: formPresensi.value.tanggalKegiatan,
+                            pelatih: [...formPresensi.value.pelatih],
+                            Daftar_Pelatih: formPresensi.value.pelatih.join(', '),
+                            rpp: formPresensi.value.rpp,
+                            RPP_Ke: formPresensi.value.rpp,
+                            customRppTitle: formPresensi.value.customRppTitle,
+                            kondisiAntusiasme: formPresensi.value.kondisiAntusiasme,
+                            kondisiFasilitas: formPresensi.value.kondisiFasilitas,
+                            kondisiCuaca: formPresensi.value.kondisiCuaca,
+                            persentaseRpp: formPresensi.value.persentaseRpp,
+                            hambatan: formPresensi.value.hambatan,
+                            Catatan_Hambatan: formPresensi.value.hambatan,
+                            linkFotoDrive: formPresensi.value.rawFoto ? URL.createObjectURL(formPresensi.value.rawFoto) : '',
+                            Link_Foto_Drive: formPresensi.value.rawFoto ? URL.createObjectURL(formPresensi.value.rawFoto) : '',
+                            waktu: new Date().toLocaleString('id-ID')
+                        };
+
+                        if (existingIdx !== -1) {
+                            targetArray[existingIdx] = newEntry;
+                        } else {
+                            targetArray.unshift(newEntry);
+                        }
+
+                        successModal.value.data = {
+                            sekolah: selectedSekolah.value,
+                            tanggal: formPresensi.value.tanggalKegiatan,
+                            rpp: rppTitleDisplay,
+                            pelatih: formPresensi.value.pelatih.join(', ')
+                        };
+                        successModal.value.show = true;
+
+                        formPresensi.value.hambatan = '';
+                        formPresensi.value.fotoName = '';
+                        formPresensi.value.rawFoto = null;
+                        formPresensi.value.customRppTitle = '';
+                        isEditMode.value = false;
+                        isSubmitting.value = false;
+
+                        fetchDataFromGAS();
+                    }
+                };
+
+                const closeSuccessModal = () => {
+                    successModal.value.show = false;
+                };
+
+                const getCoachAttendanceGAS = (coachName, sekolahKey) => {
+                    const honorList = (!isSimulationMode.value && liveHonorariumGAS.value && liveHonorariumGAS.value.length > 0)
+                        ? liveHonorariumGAS.value
+                        : mockHonorarium.value;
+
+                    const honorItem = honorList.find(h => {
+                        const name = (h.nama || h.Nama_Pelatih || h.Nama || '').toString().toLowerCase();
+                        return name.includes(coachName.toLowerCase());
+                    });
+
+                    if (honorItem) {
+                        if (sekolahKey === 'SMAN 60 JAKARTA' || sekolahKey === 'sman60') {
+                            const val = honorItem.sman60 ?? honorItem.Hadir_SMAN60 ?? honorItem.Hadir_SMAN_60 ?? honorItem['SMAN 60 JAKARTA'];
+                            if (val !== undefined && val !== null) return parseInt(val) || 0;
+                        } else if (sekolahKey === 'SMAN 46 JAKARTA' || sekolahKey === 'sman46') {
+                            const val = honorItem.sman46 ?? honorItem.Hadir_SMAN46 ?? honorItem.Hadir_SMAN_46 ?? honorItem['SMAN 46 JAKARTA'];
+                            if (val !== undefined && val !== null) return parseInt(val) || 0;
+                        } else if (sekolahKey === 'SMA DEWI SARTIKA' || sekolahKey === 'dewi_sartika') {
+                            const val = honorItem.dewi_sartika ?? honorItem.Hadir_DewiSartika ?? honorItem.Hadir_Dewi_Sartika ?? honorItem['SMA DEWI SARTIKA'];
+                            if (val !== undefined && val !== null) return parseInt(val) || 0;
+                        }
+                    }
+
+                    return 0;
+                };
+
+                const getTotalCoachAttendanceGAS = (coachName) => {
+                    const honorList = (!isSimulationMode.value && liveHonorariumGAS.value && liveHonorariumGAS.value.length > 0)
+                        ? liveHonorariumGAS.value
+                        : mockHonorarium.value;
+
+                    const honorItem = honorList.find(h => {
+                        const name = (h.nama || h.Nama_Pelatih || h.Nama || '').toString().toLowerCase();
+                        return name.includes(coachName.toLowerCase());
+                    });
+
+                    if (honorItem && (honorItem.total !== undefined || honorItem.Total_Kehadiran !== undefined)) {
+                        const tot = honorItem.total ?? honorItem.Total_Kehadiran;
+                        if (tot !== undefined && tot !== null && !isNaN(tot)) return parseInt(tot);
+                    }
+
+                    return getCoachAttendanceGAS(coachName, 'sman60') + 
+                           getCoachAttendanceGAS(coachName, 'sman46') + 
+                           getCoachAttendanceGAS(coachName, 'dewi_sartika');
+                };
+
+                const getTopStudents = (category, limit = 15) => {
+                    const list = [...filteredStudents.value];
+                    if (list.length === 0) return [];
+                    if (category === 'attendance') {
+                        return list.sort((a, b) => getStudentHadirCount(b) - getStudentHadirCount(a)).slice(0, limit);
+                    }
+                    if (category === 'tugas') {
+                        return list.sort((a, b) => (parseInt(b.tugas) || 0) - (parseInt(a.tugas) || 0)).slice(0, limit);
+                    }
+                    if (category === 'prestasi') {
+                        return list.sort((a, b) => (parseInt(b.prestasi) || 0) - (parseInt(a.prestasi) || 0)).slice(0, limit);
+                    }
+                    return list.slice(0, limit);
+                };
+
+                const openStudentModal = (student) => {
+                    selectedStudentModal.value = student;
+                };
+
+                return {
+                    activeTab, selectedSekolah, coachList, isSubmitting, isLoadingHonor, fotoInput, clockTime, searchSiswaQuery,
+                    isSimulationMode, toggleDataMode, onSchoolChange, formPresensi, setTanggalToday,
+                    jurnalLogs, filteredJurnalLogs, filteredStudents, searchedStudents, getPelatihArray, getRowSekolah, getRowTanggal,
+                    isCurrentDateAndSchoolLocked, isRPPCompleted, isEditMode, enableEditMode, cancelEditMode,
+                    successModal, errorModal, closeSuccessModal,
+                    getRPPTitle, getCompletedRPPCount, getNextRecommendedRPP, getLatestLogForSchool, getDynamicActionTitle, getDynamicActionAdvice,
+                    handleFotoChange, submitPresensiPelatih,
+                    fetchDataFromGAS, getCoachAttendanceGAS, getTotalCoachAttendanceGAS,
+                    getTopStudents, getStudentHadirCount, selectedStudentModal, openStudentModal
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
